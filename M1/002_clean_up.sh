@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # --- Configuration: Match your deployment script's values ---
-RESOURCE_GROUP="demo1_flex1"        # Name of the resource group
+RESOURCE_GROUP="<insert_resource_group>"        # Name of the resource group
 SUBSCRIPTION_ID="<insert_here_subscription_id>" 
 # ---------------------------------------------
 
@@ -54,3 +54,4 @@ fi
 echo -e "\n--- To check the deletion status in the Azure Cloud Shell, run: ---"
 
 echo "az group show --name $RESOURCE_GROUP --output table"
+
