@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # --- Configuration: Match your deployment script's values ---
-RESOURCE_GROUP="berenguel_demo1"        # Name of the resource group
-SUBSCRIPTION_ID="c1f2cd4b-4e91-4a9f-9211-07df640f8610" 
+RESOURCE_GROUP="demo1_flex1"        # Name of the resource group
+SUBSCRIPTION_ID="<insert_here_subscription_id>" 
 # ---------------------------------------------
 
 echo "Starting Azure resource cleanup..."
@@ -52,4 +52,5 @@ fi
 # --- Final Instruction ---
 # ---------------------------------------------
 echo -e "\n--- To check the deletion status in the Azure Cloud Shell, run: ---"
+
 echo "az group show --name $RESOURCE_GROUP --output table"
