@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # --- Configuration: Customize these values ---
@@ -21,12 +20,7 @@ VERSION="17"                                   # PostgreSQL version
 
 # High Availability (HA)
 # Options: ZoneRedundant (Recommended for HA), SameZone, Disabled
-HA_MODE="ZoneRedundant"
-
-# Read Replica Configuration
-# MUST be a different region than LOCATION if using ZoneRedundant HA on Primary
-REPLICA_LOCATION="<insert_location>"           # Region for the read replicas (e.g., eastus, westeurope)
-REPLICA_COUNT="<insert_number_here>"           # Number of read replicas to deploy (e.g., 2)
+HA_MODE="SameZone"
 
 # Networking and Firewall
 # NOTE: Using '0.0.0.0' below will trigger IP detection using api.ipify.org
@@ -40,7 +34,7 @@ DATABASE_NAME="pgbench"
 # --- Pre-Deployment Check and Login ---
 # ---------------------------------------------
 
-echo "Starting Azure Database for PostgreSQL Primary & HA..."
+echo "Starting Azure Database for PostgreSQL HA and Read Replica deployment..."
 
 # 1. Log in to Azure
 az account show > /dev/null
@@ -121,80 +115,24 @@ az postgres flexible-server firewall-rule create \
 echo "Firewall rules configured successfully on primary server."
 
 # ---------------------------------------------
-# --- Deployment Commands (Read Replica) ---
-# ---------------------------------------------
-
-# Note: All replicas will be placed into the existing $RESOURCE_GROUP.
-
-# 8. Create the Read Replicas (up to $REPLICA_COUNT)
-echo "Creating $REPLICA_COUNT read replica(s)..."
-LAST_REPLICA_NAME="" # Initialize a variable to hold the name of the last replica created for output
-
-for i in $(seq 1 $REPLICA_COUNT); 
-do
-    REPLICA_NAME="${SERVER_NAME}-replica-${i}"
-    REPLICA_RULE_NAME="${FIREWALL_RULE_NAME}-replica-${i}"
-    LAST_REPLICA_NAME="$REPLICA_NAME" # Update variable for output summary
-
-    echo "Creating replica $REPLICA_NAME in $REPLICA_LOCATION..."
-    # Corrected parameter: using --name instead of --replica-name
-    az postgres flexible-server replica create \
-        --resource-group $RESOURCE_GROUP \
-        --name $REPLICA_NAME \
-        --source-server $SERVER_NAME \
-        --location $REPLICA_LOCATION \
-        --output none
-
-    if [ $? -ne 0 ]; then
-        echo "Read Replica $REPLICA_NAME deployment failed. Stopping further replicas."
-        # If the script fails here, the primary server and any previously created replicas still exist.
-        exit 1
-    fi
-    
-    # Apply the firewall rule to the new replica
-    echo "Configuring firewall rule ($REPLICA_RULE_NAME) for replica $REPLICA_NAME..."
-    # Corrected command: explicitly using --server-name and --end-ip-address
-    az postgres flexible-server firewall-rule create \
-        --resource-group $RESOURCE_GROUP \
-        --server-name $REPLICA_NAME \
-        --name $REPLICA_RULE_NAME \
-        --start-ip-address $CLIENT_IP \
-        --end-ip-address $CLIENT_IP \
-        --output none
-
-    echo "Successfully created and secured replica: $REPLICA_NAME"
-done
-
-if [ -z "$LAST_REPLICA_NAME" ]; then
-    echo "No replicas were created, check REPLICA_COUNT configuration."
-else
-    echo "All $REPLICA_COUNT read replicas deployed successfully."
-fi
-
-
-# ---------------------------------------------
 # --- Output Connection Details ---
 # ---------------------------------------------
 
 echo -e "\n--- Connection Details ---"
-echo "Primary Server (HA):    $SERVER_NAME.postgres.database.azure.com"
-echo "Example Replica:        $LAST_REPLICA_NAME.postgres.database.azure.com"
-echo "Total Replicas Deployed: $REPLICA_COUNT"
-echo "Primary Resource Group: $RESOURCE_GROUP ($LOCATION)"
-echo "Replica Location:       $REPLICA_LOCATION"
+echo "Primary Server:    $SERVER_NAME.postgres.database.azure.com"
+echo "Resource Group: $RESOURCE_GROUP ($LOCATION)"
 echo "Admin User:             $ADMIN_USER"
 echo "Allowed IP:             $CLIENT_IP"
 echo -e "Port:                   5432\n"
 
 echo "You can connect to the PRIMARY server using psql with the following command (you will be prompted for the password):"
 echo "psql \"host=$SERVER_NAME.postgres.database.azure.com port=5432 dbname=postgres user=$ADMIN_USER\""
-echo "Remember to use the replica servers for read-only queries."
-echo "Example psql command for the last created replica:"
-echo "psql \"host=$LAST_REPLICA_NAME.postgres.database.azure.com port=5432 dbname=postgres user=$ADMIN_USER\""
+
 
 # ---------------------------------------------
-# --- Cleanup Commands (Optional) ---
+# --- Cleanup Command ---
 # ---------------------------------------------
-echo -e "\n--- Cleanup Commands (Optional) ---"
-echo "To delete all resources (Primary Server and $REPLICA_COUNT Read Replica(s)) created by this script, run:"
+echo -e "\n--- Cleanup Command (Optional) ---"
+echo "To delete all resources created by this script, run:"
 echo "az group delete --name $RESOURCE_GROUP --yes --no-wait"
+
