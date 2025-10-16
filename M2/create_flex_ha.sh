@@ -20,7 +20,7 @@ VERSION="17"                                   # PostgreSQL version
 
 # High Availability (HA)
 # Options: ZoneRedundant (Recommended for HA), SameZone, Disabled
-HA_MODE="SameZone"
+HA_MODE="<include_Zone_mode>"
 
 # Networking and Firewall
 # NOTE: Using '0.0.0.0' below will trigger IP detection using api.ipify.org
