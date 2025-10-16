@@ -1,0 +1,93 @@
+#Written By: Tim Chapman, Microsoft
+#Date: 10/16/2024
+#need to use a bash shell for this
+#need to have az cli installed locally
+
+#Change these variables as needed.
+RESOURCE_GROUP="pginadayrg9"
+LOCATION="eastus"
+REPLICA_LOCATION="westus"
+SERVER_NAME="pginadaysrv$RANDOM"  # Ensures unique server name
+ADMIN_USER="postgres"
+ADMIN_PASSWORD='Password12345!!'
+SKU_NAME="Standard_D2s_v3"  # Adjust SKU as needed
+STORAGE_SIZE=512  # in GB
+BACKUP_RETENTION=35  # Maximum retention in days
+HA_MODE="ZoneRedundant"  # Options: ZoneRedundant, SameZone, Disabled
+GEO_BACKUP="Enabled"  # Options: Enabled, Disabled
+REPLICA_COUNT=2  # Number of read replicas to create
+ENDPOINT_REPLICA=""
+ENDPOINT_NAME="pginaday-virtualendpoint"
+FIREWALL_RULE_NAME="AllowMyIP"
+PG_ZONE=1  #which avail zone to put the flex server in
+
+# Login to Azure if not already logged in
+az account show > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+  az login
+fi
+
+# Set the desired subscription if needed
+# az account set --subscription "your-subscription-id"
+
+# Create resource group if it doesn't exist
+echo "Creating resource group..."
+az group create --name $RESOURCE_GROUP --location $LOCATION
+
+# Grab your current public IP address and add firewall rule when creating the PG Flex server
+MY_PUBLIC_IP=$(curl -s https://api.ipify.org)
+
+# Create the PostgreSQL Flexible Server with HA, geo-backups, and VNet integration
+echo "Creating PostgreSQL Flexible Server with HA, geo-backups, and VNet integration..."
+az postgres flexible-server create \
+--name $SERVER_NAME \
+--resource-group $RESOURCE_GROUP \
+--location $LOCATION \
+--admin-user $ADMIN_USER \
+--admin-password $ADMIN_PASSWORD \
+--sku-name $SKU_NAME \
+--storage-size $STORAGE_SIZE \
+--high-availability $HA_MODE \
+--geo-redundant-backup $GEO_BACKUP \
+--backup-retention $BACKUP_RETENTION \
+--zone $PG_ZONE \
+--public-access $MY_PUBLIC_IP
+
+# Create read replicas
+echo "Creating $REPLICA_COUNT read replica(s)..."
+for i in $(seq 1 $REPLICA_COUNT); 
+do
+  #build replica name
+  REPLICA_NAME="${SERVER_NAME}-replica-${i}"
+
+  if [ "$i" = 1 ]; then
+    ENDPOINT_REPLICA=$REPLICA_NAME
+  fi
+
+  echo "Creating replica $REPLICA_NAME ..."
+  az postgres flexible-server replica create \
+  --replica-name $REPLICA_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --source-server $SERVER_NAME \
+  --location $REPLICA_LOCATION 
+
+  #create firewall rules for current publicip to access replicas
+  az postgres flexible-server firewall-rule create \
+  --resource-group $RESOURCE_GROUP \
+  --name $REPLICA_NAME \
+  --rule-name $FIREWALL_RULE_NAME \
+  --start-ip-address $MY_PUBLIC_IP
+
+  echo "Created replica: $REPLICA_NAME"
+done
+
+#create virtual endpoint
+az postgres flexible-server virtual-endpoint create \
+--resource-group $RESOURCE_GROUP \
+--server-name $SERVER_NAME \
+--name $ENDPOINT_NAME \
+--endpoint-type ReadWrite \
+--members $ENDPOINT_REPLICA
+
+#cleanup
+#az group delete --name $RESOURCE_GROUP --yes
