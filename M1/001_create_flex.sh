@@ -54,15 +54,45 @@ echo "Setting target subscription to: $SUBSCRIPTION_ID"
 az account set --subscription "$SUBSCRIPTION_ID"
 
 # 3. Get current IP for firewall rule
-if [ "$CLIENT_IP" == "0.0.0.0" ]; then
-    echo "Attempting to retrieve your current public IP address..."
-    CLIENT_IP=$(curl -s http://ipinfo.io/ip)
+# ---------------------------------------------
+# --- Pre-Deployment Check and Login ---
+# ---------------------------------------------
+
+echo "Starting Azure Database for PostgreSQL deployment..."
+
+# 1. Log in to Azure
+az account show > /dev/null
+if [ $? -ne 0 ]; then
+    echo "Logging into Azure CLI..."
+    az login
+    if [ $? -ne 0 ]; then
+        echo "Azure login failed. Exiting."
+        exit 1
+    fi
+fi
+
+# 2. SET THE TARGET SUBSCRIPTION
+echo "Setting target subscription to: $SUBSCRIPTION_ID"
+az account set --subscription "$SUBSCRIPTION_ID"
+
+# 3. Get current IP for firewall rule
+if [ "$CLIENT_IP" == "0.0.0.0" ] || [ "$CLIENT_IP" == "<your_ip_address>" ]; then
+    echo "Attempting to retrieve your current public IP address using api.ipify.org..."
+    # --- UPDATED IP RETRIEVAL ---
+    CLIENT_IP=$(curl -s https://api.ipify.org)
+    # -----------------------------
+    
+    # Simple check to see if the curl command was successful and returned a non-empty string
     if [ $? -ne 0 ] || [ -z "$CLIENT_IP" ]; then
-        echo "Could not retrieve public IP. Please update the CLIENT_IP variable manually."
+        echo "ERROR: Could not retrieve public IP. Please update the CLIENT_IP variable manually in the script."
         exit 1
     fi
     echo "Your detected public IP is: $CLIENT_IP"
 fi
+
+# ---------------------------------------------
+# --- Deployment Commands ---
+# ---------------------------------------------
 
 # ---------------------------------------------
 # --- Deployment Commands ---
