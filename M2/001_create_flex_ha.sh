@@ -13,14 +13,14 @@ ADMIN_USER="<insert_admin_user>"               # Admin username (not 'azure_supe
 # IMPORTANT: Replace 'YourStrongPassword123' with a complex password
 ADMIN_PASSWORD="<YourStrongPassword123>"
 
+# High Availability (HA)
+# Options: ZoneRedundant (Recommended for HA), SameZone, Disabled
+HA_MODE="<insert_mode>" # High Availability configured within a single Availability Zone
+
 # SKU (Tier and Size)
 TIER="GeneralPurpose"
 SKU_NAME="Standard_D2s_v3"
 VERSION="17"                                   # PostgreSQL version
-
-# High Availability (HA)
-# Options: ZoneRedundant (Recommended for HA), SameZone, Disabled
-HA_MODE="<insert_mode>" # High Availability configured within a single Availability Zone
 
 # Networking and Firewall
 # NOTE: Using '0.0.0.0' below will trigger IP detection using api.ipify.org
