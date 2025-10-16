@@ -3,15 +3,13 @@
 # --- Configuration: Customize these values ---
 
 # Azure Details
-LOCATION="uksouth"                    # Azure region (e.g., westus3, eastus, uksouth)
-RESOURCE_GROUP="demo_flex1"        # Name of the resource group
-
-
+LOCATION="<insert_location>"                    # Azure region (e.g., westus3, eastus, uksouth)
+RESOURCE_GROUP="<insert_resource_group>"        # Name of the resource group
 SUBSCRIPTION_ID="<insert_here_subscription_id>"
 
 # PostgreSQL Server Details
 SERVER_NAME="<insert_server_name>"         # Must be globally unique, 3-63 chars, lowercase, letters, numbers, and hyphens
-ADMIN_USER="demo_flex1"                               # Admin username (not 'azure_superuser')
+ADMIN_USER="<insert_admin_user>"                               # Admin username (not 'azure_superuser')
 # IMPORTANT: Replace 'YourStrongPassword123' with a complex password
 # Password must be 8-128 chars and contain characters from three of the following:
 # English uppercase, English lowercase, numbers, and non-alphanumeric characters.
@@ -26,11 +24,11 @@ VERSION="17"                                    # PostgreSQL version (e.g., 11, 
 
 # Networking and Firewall
 # To find your current public IP, visit a site like 'whatismyip.com'
-CLIENT_IP="<your_ip_address>"                         # YOUR LOCAL PUBLIC IP ADDRESS
+CLIENT_IP="0.0.0.0"                         # YOUR LOCAL PUBLIC IP ADDRESS
 FIREWALL_RULE_NAME="AllowMyIP"                        
 
 # Database to create after server deployment
-DATABASE_NAME="demo_flex1"                           # Name of the initial database to create
+DATABASE_NAME="pgbench"                           # Name of the initial database to create
 
 # ---------------------------------------------
 # --- Pre-Deployment Check and Login ---
