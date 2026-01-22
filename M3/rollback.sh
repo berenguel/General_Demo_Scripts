@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # --- Configuration (Must match your provisioning script) ---
-SUBSCRIPTIONS=("c1f2cd4b-4e91-4a9f-9211-07df640f8610" "c1f2cd4b-4e91-4a9f-9211-07df640f8610" "c1f2cd4b-4e91-4a9f-9211-07df640f8610")
+SUBSCRIPTIONS=("subs1" "subs2" "subs3")
 SERVER_NAMES=("server-prod-01" "server-stage-01" "server-dev-01")
-RESOURCE_GROUP="berenguel"
+RESOURCE_GROUP="rg_group_name"
 
 echo "Starting selective cleanup of PostgreSQL servers..."
 
@@ -24,7 +24,7 @@ for i in "${!SUBSCRIPTIONS[@]}"; do
         az postgres flexible-server delete \
             --resource-group "$RESOURCE_GROUP" \
             --name "$SVR_NAME" \
-            --yes --no-wait
+            --yes
     else
         echo "Server $SVR_NAME not found in $SUB_ID. Skipping."
     fi
